@@ -4,20 +4,14 @@
 
 #define SCREEN_WIDTH 900
 #define SCREEN_HIGHT 600
-#define CELL_SIZE 12
-#define CELL_SPACE 1
-#define COLs SCREEN_WIDTH / CELL_SIZE
-#define ROWs SCREEN_HIGHT / CELL_SIZE
+#define CELL_SIZE 10
+#define COLs (SCREEN_WIDTH / CELL_SIZE)
+#define ROWs (SCREEN_HIGHT / CELL_SIZE)
 
-// colors
-#define WHITE 0xffffff
-#define BLACK 0x000000
-#define BLUE 0x0000ff
-#define GRAY 0x333333
-
-typedef enum CellType{
+typedef enum CellType
+{
     fluid = 'f',
-    wall =  'w',
+    wall = 'w',
     empty = 'e'
 } CellType;
 
@@ -26,43 +20,21 @@ typedef struct Cell
     CellType type;
 } Cell;
 
-
-void drawCells(SDL_Surface *surface, Cell cells[COLs][ROWs]){
-    for (int i = 0; i < COLs; i++)
-    {
-        for (int j = 0; j < ROWs; j++)
-        {
-            switch (cells[i][j].type){
-                case fluid:
-                    SDL_FillSurfaceRect(surface, &(SDL_Rect){i * CELL_SIZE, j * CELL_SIZE, CELL_SIZE, CELL_SIZE}, BLUE);
-                    break;
-                case wall:
-                    SDL_FillSurfaceRect(surface, &(SDL_Rect){i * CELL_SIZE, j * CELL_SIZE, CELL_SIZE, CELL_SIZE}, WHITE);
-                    break;
-                case empty:
-                    break;
-            }
-        }
-    }
-}
-
-void initCells(Cell cells[COLs][ROWs]){
-    for (int i = 0; i < COLs; i++)
-    {
-        for (int j = 0; j < ROWs; j++)
-        {
-            cells[i][j].type = empty;
-        }
-    }
-}
+void initCells(Cell cells[COLs][ROWs]);
+void drawCells(SDL_Renderer *renderer, Cell cells[COLs][ROWs]);
+void updateCells(Cell cells[COLs][ROWs]);
 
 int main(int argc, char *argv[])
 {
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Window *window = SDL_CreateWindow("Fluid Simulation", SCREEN_WIDTH, SCREEN_HIGHT, 0);
-    SDL_Surface *surface = SDL_GetWindowSurface(window);
-    SDL_Rect rect = (SDL_Rect){100, 100, 100, 50};
-    SDL_Rect rect2 = (SDL_Rect){200, 100, 100, 50};
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
+
+    if (!renderer)
+    {
+        printf("Error: %s\n", SDL_GetError());
+        return 1;
+    }
 
     uint8_t running = 1;
     SDL_Event event;
@@ -72,10 +44,11 @@ int main(int argc, char *argv[])
     initCells(cells);
 
     while (running)
-    {   
-        SDL_FillSurfaceRect(surface, NULL, BLACK); // clear the screen
-        
-        drawCells(surface, cells); // draw cells
+    {
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+        drawCells(renderer, cells);
+        updateCells(cells);
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_EVENT_QUIT)
@@ -87,10 +60,13 @@ int main(int argc, char *argv[])
                 uint32_t state = event.motion.state;
                 if (state & SDL_BUTTON_LEFT)
                 {
-                    int x = event.motion.x/CELL_SIZE;
-                    int y = event.motion.y/CELL_SIZE;
-                    if (x < 0 || x >= COLs || y < 0 || y >= ROWs) continue;
-                    cells[x][y].type = currentType;
+                    int x = (int)(event.motion.x / CELL_SIZE);
+                    int y = (int)(event.motion.y / CELL_SIZE);
+
+                    if (x >= 0 && x < COLs && y >= 0 && y < ROWs)
+                    {
+                        cells[x][y].type = currentType;
+                    }
                 }
             }
             if (event.type == SDL_EVENT_KEY_DOWN)
@@ -107,23 +83,83 @@ int main(int argc, char *argv[])
                     currentType = wall;
                     break;
                 case SDLK_C:
-                    initCells(cells); // reset to empty
-                    drawCells(surface, cells);
-                    SDL_UpdateWindowSurface(window);
+                    initCells(cells);
                     break;
                 case SDLK_ESCAPE:
                     running = 0;
                     break;
-                default:
-                    printf("Many years ago in a galaxy far, far away...\n");
-                    break;
                 }
             }
-            
-            
         }
 
-        SDL_UpdateWindowSurface(window);
+        SDL_RenderPresent(renderer);
         SDL_Delay(16); // max 60 fps cap
+    }
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    return 0;
+}
+
+void initCells(Cell cells[COLs][ROWs])
+{
+    for (int i = 0; i < COLs; i++)
+    {
+        for (int j = 0; j < ROWs; j++)
+        {
+            cells[i][j].type = empty;
+        }
+    }
+}
+
+void drawCells(SDL_Renderer *renderer, Cell cells[COLs][ROWs])
+{
+    for (int i = 0; i < COLs; i++)
+    {
+        for (int j = 0; j < ROWs; j++)
+        {
+            if (cells[i][j].type == empty)
+                continue;
+            switch (cells[i][j].type)
+            {
+            case fluid:
+                SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255); // Blue
+                break;
+            case wall:
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White
+                break;
+            case empty:
+                break;
+            }
+            SDL_FRect rect = {(float)(i * CELL_SIZE), (float)(j * CELL_SIZE), CELL_SIZE, CELL_SIZE};
+            SDL_RenderFillRect(renderer, &rect);
+        }
+    }
+}
+
+void updateCells(Cell cells[COLs][ROWs])
+{
+    for (int i = COLs - 1; i >= 0; i--)
+    {
+        for (int j = ROWs - 1; j >= 0; j--)
+        {
+            if (cells[i][j].type == fluid)
+            {
+                // check below
+                if (j + 1 < ROWs)
+                {
+                    Cell *below = &cells[i][j + 1]; // Pointer to the cell below
+                    if (below->type == empty)
+                    {
+                        // Move fluid down
+                        below->type = fluid;
+                        cells[i][j].type = empty;
+                        continue;
+                    }
+                }
+                
+            }
+        }
     }
 }
