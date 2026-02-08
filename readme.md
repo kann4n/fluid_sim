@@ -1,18 +1,24 @@
-### screenshot
+## compile
 
-## compile main.c
-
+### main.c
 ```bash
-gcc main.c -o main -I"C:/SDL3/include" -L"C:/SDL3/lib" -lSDL3
+gcc main.c -o main -lSDL3
 ```
 
-## run main
-
+### random_walk.c
 ```bash
-./main.exe
+gcc random_walk.c -o random_walk -lSDL3
+```
+```bash
+./random_walk <num_of_agent> (optional)
+```
+
+### compile space_sim.c
+```bash
+gcc .\space_sim.c -o space_sim -l SDL3 -lSDL3_image
 ```
 
 ## screenshot
-
-![main](/imgs/v1.png)
-![walk](/imgs/walk.png)
+![main](/imgs/fluid-v1.png)
+![walk](/imgs/random-walk-v1.png)
+![space](/imgs/space-sim-v0.1.png)
