@@ -12,16 +12,22 @@ void show_debug_info(const char *msg, int debug)
         if (debug)
                 SDL_Log(" | %s", SDL_GetError());
 }
+struct PippetPoint
+{
+        float x;
+        float y;
+};
 
 typedef struct
 {
         char name[16]; // 2 bytes
         int mass;      // int will work since it rel mass to mercury
         float radius;
-        float distance;
+        struct PippetPoint pippetPoint; // this is the point the body will orbit around
+        float distance; // distance from pippetPoint
         SDL_Texture *texture;
         SDL_FRect rect;
-} Planet;
+} Body;
 
 int main(int argc, char *argv[])
 {
@@ -56,8 +62,9 @@ int main(int argc, char *argv[])
 
         SDL_Texture *sunTex = IMG_LoadTexture(prenderer, "imgs/assets/sun.png");
         SDL_Texture *earthTex = IMG_LoadTexture(prenderer, "imgs/assets/earth.png");
+        SDL_Texture *moonTex = IMG_LoadTexture(prenderer, "imgs/assets/moon.jpg");
 
-        if (!sunTex || !earthTex)
+        if (!sunTex || !earthTex || !moonTex)
         {
                 show_debug_info("Failed to Load Textures", debug);
                 SDL_DestroyRenderer(prenderer);
@@ -69,18 +76,29 @@ int main(int argc, char *argv[])
         float centerX = SCREEN_WIDTH / 2;
         float centerY = SCREEN_HEIGHT / 2;
 
-        SDL_FRect earthRect = {600, 300, 50, 50};
         SDL_FRect sunRect = {centerX - sunSize / 2, centerY - sunSize / 2, sunSize, sunSize};
 
-        Planet earth = {
+        Body earth = {
             .name = "Earth",
             .mass = 18,
-            .radius = 50,
+            .radius = 25,
+            .pippetPoint = {centerX, centerY},
             .distance = 200,
             .texture = earthTex,
-            .rect = earthRect,
+            .rect = {600, 300, 50, 50},
         };
-        float i = 0; // i is angle 
+        Body moon = {
+            .name = "Moon",
+            .mass = 1,
+            .radius = 10,
+            .pippetPoint = {earth.rect.x + earth.radius, earth.rect.y + earth.radius},
+            .distance = 60,
+            .texture = moonTex,
+            .rect = {650, 300, 20, 20},
+        };
+
+        float time = 0;
+        float moontimeScale = 1.1;
         while (running)
         {
                 SDL_Event event;
@@ -93,11 +111,12 @@ int main(int argc, char *argv[])
                 SDL_SetRenderDrawColor(prenderer, 0, 0, 0, 255); // black bg
                 SDL_RenderClear(prenderer);                      // clear with black
 
+                // sun
                 SDL_RenderTexture(prenderer, sunTex, NULL, &sunRect);
-
-                
+                // earth
                 SDL_RenderTexture(prenderer, earthTex, NULL, &earth.rect);
-
+                // moon
+                SDL_RenderTexture(prenderer, moonTex, NULL, &moon.rect);
                 // earth rotate anim by math sin and cos
                 // curr this is fake need to study phy and math more to make it more real
                 // to use
@@ -110,9 +129,16 @@ int main(int argc, char *argv[])
                 //      use real values
                 //      add satalaites and sound and muisc
                 //      add randome twists like comets and meteors alins and god kannan cameo idk but why 
-                earth.rect.x = centerX + earth.distance * sin(i);
-                earth.rect.y = centerY + earth.distance * cos(i);
-                i += 0.01;
+                earth.rect.y = earth.pippetPoint.y + earth.distance * cos(time);
+                earth.rect.x = earth.pippetPoint.x + earth.distance * sin(time);
+
+                moon.rect.y = moon.pippetPoint.y + moon.distance * cos(time*moontimeScale);
+                moon.rect.x = moon.pippetPoint.x + moon.distance * sin(time*moontimeScale);
+
+                time += 0.01;
+                moon.pippetPoint.x = earth.rect.x + earth.radius;
+                moon.pippetPoint.y = earth.rect.y + earth.radius;
+
                 SDL_RenderPresent(prenderer);
                 SDL_Delay(16);
         }
