@@ -3,7 +3,7 @@
 #include <math.h>
 
 #define SCREEN_WIDTH 1200
-#define SCREEN_HEIGHT 720
+#define SCREEN_HEIGHT 900
 
 typedef enum BodyTex {
         SUN,
@@ -26,7 +26,7 @@ typedef struct Body {
 void update_body(Body* b, float delta_time, float centerX, float centerY)
 {
         b->angle += b->orbit_speed * delta_time;
-      
+
         float px
                 = b->parent ? (b->parent->rect.x + b->parent->rect.w / 2.0f) : centerX;
         float py
@@ -48,17 +48,33 @@ void cleanup(SDL_Window* win, SDL_Renderer* ren, SDL_Texture** texs, int tex_cou
         SDL_Log("Resources cleaned and program terminated.");
 }
 
+void draw_orbit(SDL_Renderer* renderer, Body* b, float centerX, float centerY) {
+        if (b->orbit_radius <= 10) return; // Sun doesn't need an orbit line
+
+        float px = b->parent ? (b->parent->rect.x + b->parent->rect.w / 2.0f) : centerX;
+        float py = b->parent ? (b->parent->rect.y + b->parent->rect.h / 2.0f) : centerY;
+
+        SDL_SetRenderDrawColor(renderer, 100, 100, 100, 100); //grey
+        for (int i = 0; i < 360; i += 4) { // just hint 
+                float x = px + b->orbit_radius * cosf(i * SDL_PI_F / 180.0f);
+                float y = py + b->orbit_radius * sinf(i * SDL_PI_F / 180.0f);
+                SDL_RenderPoint(renderer, x, y);
+        }
+}
+
 int main(int argc, char* argv[])
 {
         if (!SDL_Init(SDL_INIT_VIDEO))
+        {
+                SDL_Log("Video Init Error: %s", SDL_GetError());
                 return -1;
-
+        }
         SDL_Window* window = NULL;
         SDL_Renderer* renderer = NULL;
 
         if (!SDL_CreateWindowAndRenderer("Space Sim", SCREEN_WIDTH, SCREEN_HEIGHT,
-                SDL_WINDOW_MAXIMIZED  , &window, &renderer)) {
-                SDL_Log("Window Error: %s", SDL_GetError());
+                SDL_WINDOW_MAXIMIZED, &window, &renderer)) {
+                SDL_Log("Window Init Error: %s", SDL_GetError());
                 return -2;
         }
 
@@ -74,38 +90,44 @@ int main(int argc, char* argv[])
                 return -3;
         }
 
-        Body sun = {
-            .name = "Sun",
-            .orbit_speed = 0.0f,
-            .orbit_radius = 0,
-            .angle = 0,
-            .texture = tex[SUN], // sun Texture
-            .rect = { SCREEN_WIDTH / 2.0f - 100 / 2, SCREEN_HEIGHT / 2.0f - 100 / 2, 100, 100 },
-            .parent = NULL
-        };
-
-        Body earth = {
-            .name = "Earth",
-            .orbit_speed = 0.5f,
-            .orbit_radius = 200.0f,
-            .angle = 0,
-            .texture = tex[EARTH], // earth Texture
-            .rect = { 0, 0, 50, 50 }, // will be done via update call
-            .parent = NULL
-        };
-
-        Body moon = {
-            .name = "Moon",
-            .orbit_speed = 2.0f,
-            .orbit_radius = 60.0f,
-            .angle = 0,
-            .texture = tex[MOON],
-            .rect = { 0, 0, 20, 20 }, // will be done via update call
-            .parent = &earth
-        };
-
         int running = 1;
         Uint64 last_ticks = SDL_GetTicks();
+        Body bodies[BODY_COUNT] = {
+                [SUN] = {
+                       .name = "Sun",
+                       .orbit_speed = 0.0f,
+                       .orbit_radius = 0.0f,
+                       .angle = 0,
+                       .texture = tex[SUN],
+                       .rect = {550, 400, 100, 100},
+                       .parent = NULL
+                },
+                [EARTH] = {
+                        .name = "Earth",
+                        .orbit_speed = 1.0f,
+                        .orbit_radius = 200.0f,
+                        .angle = 0,
+                        .texture = tex[EARTH],
+                        .rect = {0, 0, 50, 50},
+                        .parent = NULL
+                },
+                [MOON] = {
+                        .name = "Moon",
+                        .orbit_speed = 2.0f,
+                        .orbit_radius = 70.0f,
+                        .angle = 0,
+                        .texture = tex[MOON],
+                        .rect = {0, 0, 20, 20},
+                        .parent = &bodies[EARTH]
+                }
+        };
+        bodies[EARTH].parent = &bodies[SUN];
+        bodies[MOON].parent = &bodies[EARTH];
+
+        float planetCenterPoint[2] = {
+                (bodies[SUN].rect.x + bodies[SUN].rect.w / 2.0f),
+                 (bodies[SUN].rect.y + bodies[SUN].rect.h / 2.0f)
+        };
 
         while (running) {
                 SDL_Event event;
@@ -120,17 +142,21 @@ int main(int argc, char* argv[])
                 last_ticks = current_ticks;
 
                 // Update Physics
-                update_body(&earth, delta, sun.rect.x + sun.rect.w / 2.0f, sun.rect.y + sun.rect.h / 2.0f);
-                update_body(&moon, delta, 0, 0); // Center is ignored because moon has a parent
+                for (int i = 0; i < BODY_COUNT; i++) {
+                        update_body(&bodies[i], delta, planetCenterPoint[0], planetCenterPoint[1]);
+                }
 
                 // Render
-                SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-                SDL_SetRenderDrawColor(renderer, 5, 5, 15, 20); // Deep space blue/black
-                SDL_RenderFillRect(renderer, NULL);
+                SDL_SetRenderDrawColor(renderer, 5, 5, 20, 255); // Deep space clr
+                SDL_RenderClear(renderer);
 
-                SDL_RenderTexture(renderer, sun.texture, NULL, &sun.rect);
-                SDL_RenderTexture(renderer, earth.texture, NULL, &earth.rect);
-                SDL_RenderTexture(renderer, moon.texture, NULL, &moon.rect);
+                for (int i = 0; i < BODY_COUNT; i++) {
+                        draw_orbit(renderer, &bodies[i], planetCenterPoint[0], planetCenterPoint[1]);
+                }
+                for (int i = 0; i < BODY_COUNT; i++) {
+                        SDL_RenderTextureRotated(renderer, bodies[i].texture, NULL, &bodies[i].rect,
+                                bodies[i].angle * 0.5f, NULL, SDL_FLIP_NONE);
+                }
 
                 SDL_RenderPresent(renderer);
         }
