@@ -7,6 +7,7 @@
 
 typedef enum BodyTex {
         SUN,
+        MERCURY,
         EARTH,
         MOON,
         BODY_COUNT // tip it say the count without counting
@@ -55,10 +56,12 @@ void draw_orbit(SDL_Renderer* renderer, Body* b, float centerX, float centerY) {
         float py = b->parent ? (b->parent->rect.y + b->parent->rect.h / 2.0f) : centerY;
 
         SDL_SetRenderDrawColor(renderer, 100, 100, 100, 100); //grey
-        for (int i = 0; i < 360; i += 4) { // just hint 
+        for (int i = 0; i < 360; i += 1) { // just hint 
                 float x = px + b->orbit_radius * cosf(i * SDL_PI_F / 180.0f);
                 float y = py + b->orbit_radius * sinf(i * SDL_PI_F / 180.0f);
-                SDL_RenderPoint(renderer, x, y);
+                float x2 = px + b->orbit_radius * cosf((i + 1) * SDL_PI_F / 180.0f);
+                float y2 = py + b->orbit_radius * sinf((i + 1) * SDL_PI_F / 180.0f);
+                SDL_RenderLine(renderer, x, y, x2, y2);
         }
 }
 
@@ -81,6 +84,7 @@ int main(int argc, char* argv[])
         // Load Textures
         SDL_Texture* tex[BODY_COUNT];
         tex[SUN] = IMG_LoadTexture(renderer, "imgs/assets/sun.png");
+        tex[MERCURY] = IMG_LoadTexture(renderer, "imgs/assets/mercury.png");
         tex[EARTH] = IMG_LoadTexture(renderer, "imgs/assets/earth.png");
         tex[MOON] = IMG_LoadTexture(renderer, "imgs/assets/moon.jpg");
 
@@ -102,9 +106,18 @@ int main(int argc, char* argv[])
                        .rect = {550, 400, 100, 100},
                        .parent = NULL
                 },
+                [MERCURY] = {
+                        .name = "Mercury",
+                        .orbit_speed = 1.1f,
+                        .orbit_radius = 100.0f,
+                        .angle = 0,
+                        .texture = tex[MERCURY],
+                        .rect = {0, 0, 20, 20},
+                        .parent = &bodies[SUN]
+                },
                 [EARTH] = {
                         .name = "Earth",
-                        .orbit_speed = 1.0f,
+                        .orbit_speed = 0.9f,
                         .orbit_radius = 200.0f,
                         .angle = 0,
                         .texture = tex[EARTH],
@@ -114,7 +127,7 @@ int main(int argc, char* argv[])
                 [MOON] = {
                         .name = "Moon",
                         .orbit_speed = 2.0f,
-                        .orbit_radius = 70.0f,
+                        .orbit_radius = 50.0f,
                         .angle = 0,
                         .texture = tex[MOON],
                         .rect = {0, 0, 20, 20},
