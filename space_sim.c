@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
                 SDL_Log("Window Init Error: %s", SDL_GetError());
                 return -2;
         }
-
+        SDL_SetRenderVSync(renderer, 1); // 1 = On, 0 = Off
         // Load Textures
         SDL_Texture* tex[BODY_COUNT];
         tex[SUN] = IMG_LoadTexture(renderer, "imgs/assets/sun.png");
