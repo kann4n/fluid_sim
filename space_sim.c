@@ -121,8 +121,6 @@ int main(int argc, char* argv[])
                         .parent = &bodies[EARTH]
                 }
         };
-        bodies[EARTH].parent = &bodies[SUN];
-        bodies[MOON].parent = &bodies[EARTH];
 
         float planetCenterPoint[2] = {
                 (bodies[SUN].rect.x + bodies[SUN].rect.w / 2.0f),
