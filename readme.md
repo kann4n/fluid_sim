@@ -1,45 +1,69 @@
 <table>
-	<tr>
-    		<td>
-      			<h3>Fluid</h3>
-      			<img src="/imgs/fluid-v1.png" width="400"/>
-			<p>
-				<strong>Compile</strong>
-				<code>gcc main.c -o main -lSDL3</code>
-			</p>
-			<p>
-				<strong>Run</strong>
-				<code>./main</code>
-			</p>
-    		</td>
-    		<td>
-      			<h3>Random Walk</h3>
-      			<img src="/imgs/random-walk-v1.png" width="400"/>
-			<p>
-				<strong>Compile</strong>
-				<code>gcc random_walk.c -o random_walk -lSDL3</code>
-			</p>
-			<p>
-				<strong>Run</strong>
-				<code>./random_walk &lt;num_of_agent&gt; (optional)</code>
-			</p>
-    		</td>
-	</tr>
-  	<tr>
-    		<td>
-      			<h3>Space Sim</h3>
-			<img src="/imgs/space-sim-v0.1.png" width="400"/>
-			<p>
-				<strong>Complie</strong>
-				<code>gcc .\space_sim.c -o space_sim -l SDL3 -lSDL3_image</code>
-			</p>
-			<p>
-				<strong>Run</strong>
-				<code>./space_sim</code>
-			</p>
-    		</td>
-  	</tr>
+    <tr>
+        <td>
+            <h3>Fluid</h3>
+            <img src="/imgs/fluid-v1.png" width="400"/>
+            <p>
+                <strong>Mechanism</strong><br>
+                A grid-based cellular automata simulation focusing on fluid dynamics.
+                <ul>
+                    <li><strong>Grid System:</strong> The screen is divided into a <code>CELL_SIZE</code> grid of 'Fluid', 'Wall', or 'Empty' cells.</li>
+                    <li><strong>Physics:</strong> Implements a falling-sand style algorithm where fluid cells check the space below and move if it is empty.</li>
+                    <li><strong>Interaction:</strong> Users can paint walls (W), spawn fluid (F), or erase (E) in real-time.</li>
+                </ul>
+            </p>
+            <p>
+                <strong>Compile</strong><br>
+                <code>gcc fluid.c -o fluid -lSDL3</code>
+            </p>
+            <p>
+                <strong>Run</strong><br>
+                <code>./fluid</code>
+            </p>
+        </td>
+        <td>
+            <h3>Random Walk</h3>
+            <img src="/imgs/random-walk-v1.png" width="400"/>
+            <p>
+                <strong>Mechanism</strong><br>
+                A multi-agent simulation where each "agent" performs a stochastic path.
+                <ul>
+                    <li><strong>Color:</strong> Uses HSL-to-RGB conversion to give each agent a unique hue based on its index.</li>
+                    <li><strong>Movement:</strong> Supports 4-directional or 8-directional paths constrained by window boundaries.</li>
+                    <li><strong>Scale:</strong> A <code>SCALE</code> constant defines the step length, allowing for solid lines or dotted patterns.</li>
+                </ul>
+            </p>
+            <p>
+                <strong>Compile</strong><br>
+                <code>gcc random_walk.c -o random_walk -lSDL3 -lm</code>
+            </p>
+            <p>
+                <strong>Run</strong><br>
+                <code>./random_walk &lt;num_of_agent&gt;</code>
+            </p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <h3>Space Sim</h3>
+            <img src="/imgs/space-sim-v0.1.png" width="400"/>
+            <p>
+                <strong>Mechanism</strong><br>
+                A 2D orbital mechanics simulation using parent-child relationships.
+                <ul>
+                    <li><strong>Hierarchical Orbits:</strong> Bodies can orbit other bodies (e.g., Moon orbits Earth, Earth orbits Sun) using pointer references.</li>
+                    <li><strong>Trigonometry:</strong> Uses <code>cosf</code> and <code>sinf</code> with <code>delta_time</code> to calculate precise circular positions.</li>
+                    <li><strong>Visuals:</strong> Renders orbital paths as geometric hints and supports rotated textures for planetary axial rotation.</li>
+                </ul>
+            </p>
+            <p>
+                <strong>Compile</strong><br>
+                <code>gcc space_sim.c -o space_sim -lSDL3 -lSDL3_image -lm</code>
+            </p>
+            <p>
+                <strong>Run</strong><br>
+                <code>./space_sim</code>
+            </p>
+        </td>
+    </tr>
 </table>
-<!-- ![main](/imgs/fluid-v1.png)
-![walk](/imgs/random-walk-v1.png)
-![space](/imgs/space-sim-v0.1.png) -->
